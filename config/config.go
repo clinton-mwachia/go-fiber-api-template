@@ -20,8 +20,11 @@ type Config struct {
 	JWTTTLMin int
 }
 
-var DB *mongo.Database
-var Cfg *Config
+var (
+	DB     *mongo.Database
+	Client *mongo.Client
+	Cfg    *Config
+)
 
 // a function to load env varibales
 func Load() {
@@ -60,6 +63,7 @@ func Load() {
 	}
 }
 
+// connect to the database
 func ConnectDB() {
 	mongoURI := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("DB_NAME")
@@ -82,4 +86,20 @@ func ConnectDB() {
 
 func GetCollection(name string) *mongo.Collection {
 	return DB.Collection(name)
+}
+
+// DisconnectDB gracefully closes the MongoDB connection.
+func DisconnectDB() {
+	if Client == nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := Client.Disconnect(ctx); err != nil {
+		log.Println("⚠️ Error disconnecting MongoDB:", err)
+	} else {
+		log.Println("👋 Disconnected from MongoDB")
+	}
 }
