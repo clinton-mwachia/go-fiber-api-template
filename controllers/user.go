@@ -33,7 +33,7 @@ func Register(c *fiber.Ctx) error {
 		body.Role = "user"
 	}
 
-	// set ID
+	// set ID manually
 	// body.ID = primitive.NewObjectID()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
