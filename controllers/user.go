@@ -173,3 +173,58 @@ func DeleteUser(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "User deleted successfully"})
 }
+
+// change password
+func ChangePassword(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+
+	// Validate ObjectID
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	var body struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if body.CurrentPassword == "" || body.NewPassword == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Both current and new password are required"})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Fetch user
+	var user models.User
+	if err := userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user"})
+	}
+
+	// Verify current password
+	if !utils.CheckPassword(user.Password, body.CurrentPassword) {
+		return c.Status(400).JSON(fiber.Map{"error": "Current password is incorrect"})
+	}
+
+	// Hash new password
+	hashed, _ := utils.HashPassword(body.NewPassword)
+
+	// Update in DB
+	_, err = userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": objID},
+		bson.M{"$set": bson.M{"password": hashed}},
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update password"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Password updated successfully"})
+}
