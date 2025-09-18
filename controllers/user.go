@@ -64,3 +64,28 @@ func GetAllUsers(c *fiber.Ctx) error {
 
 	return c.JSON(users)
 }
+
+// get user by id
+func GetUserByID(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+
+	// Validate ObjectID
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	var user models.User
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user"})
+	}
+
+	return c.JSON(user)
+}
