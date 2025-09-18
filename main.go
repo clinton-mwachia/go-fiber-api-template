@@ -1,15 +1,41 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
+	"github.com/clinton-mwachia/go-fiber-api-template/routes"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
+	app := fiber.New()
 	// load env
 	config.Load()
 	// connect DB
 	config.ConnectDB()
-	fmt.Println("Hello go fiver template")
+
+	// setup routes (controllers contain logic)
+	routes.SetUpRouter(app)
+
+	// Handle shutdown signals
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// graceful shutdown
+	go func() {
+		if err := app.Listen(":" + config.Cfg.Port); err != nil {
+			log.Printf("listen error: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-stop
+	log.Println("🛑 Shutting down server...")
+
+	// Disconnect DB gracefully
+	config.DisconnectDB()
 }
