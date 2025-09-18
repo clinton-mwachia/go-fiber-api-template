@@ -15,4 +15,5 @@ func SetUpRouter(app *fiber.App) {
 	api.Post("/user/register", controllers.Register)
 	api.Get("/users", controllers.GetAllUsers)
 	api.Get("/user/:id", controllers.GetUserByID)
+	api.Put("/user/:id", controllers.UpdateUser)
 }

@@ -89,3 +89,62 @@ func GetUserByID(c *fiber.Ctx) error {
 
 	return c.JSON(user)
 }
+
+// update user by id
+func UpdateUser(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+
+	// Validate ObjectID
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	var body struct {
+		Username *string `json:"username"`
+		Email    *string `json:"email"`
+		Role     *string `json:"role"`
+	}
+
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	update := bson.M{}
+	if body.Username != nil {
+		update["username"] = body.Username
+	}
+	if body.Email != nil {
+		update["email"] = *body.Email
+	}
+	if body.Role != nil {
+		update["role"] = *body.Role
+	}
+
+	if len(update) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "No fields to update"})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": objID},
+		bson.M{"$set": update},
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update user"})
+	}
+	if result.MatchedCount == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	// Fetch updated user
+	var updatedUser models.User
+	if err := userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&updatedUser); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch updated user"})
+	}
+
+	return c.JSON(updatedUser)
+}
