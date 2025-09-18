@@ -1,2 +1,204 @@
-# go-fiber-api-template
-A production-ready Go Fiber API template with MongoDB and JWT Authentication, designed for scalability, security, and maintainability.   This template can serve as a starting point for building APIs of any size.
+# Fiber + MongoDB API Template 🚀
+
+A production-ready **Go Fiber API template** with **MongoDB** and **JWT Authentication**, designed for scalability, security, and maintainability.  
+This template can serve as a starting point for building APIs of any size.
+
+---
+
+## ✨ Features
+
+- ⚡ Fast API server using [Fiber](https://github.com/gofiber/fiber)
+- 🗄️ MongoDB integration (with official driver)
+- 🔐 JWT authentication
+- 👤 User & Todo example models
+- 🛡️ Role-based access (Admin vs Normal User)
+- 📂 Modular project structure (`models`, `routes`, `middlewares`, `utils`, `config`)
+- 📝 Environment-based configuration
+- 🚀 Ready for containerization and cloud deployment
+
+---
+
+## 📂 Project Structure
+
+```
+
+go-fiber-api-template/
+│── main.go
+│── go.mod
+│── go.sum
+│── config/
+│ └── config.go
+│── models/
+│ ├── user.go
+│ └── todo.go
+│── routes/
+│ ├── auth.go
+│ ├── todo.go
+│ └── user.go
+│── controllers/
+│ ├── authController.go
+│ ├── todoController.go
+│ └── userController.go
+│── middlewares/
+│ ├── jwt.go
+│ └── role.go
+│── utils/
+│ ├── jwt.go
+│ └── password.go
+│── .env
+│── README.md
+
+```
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1. Clone Repo
+
+```bash
+git https://github.com/clinton-mwachia/go-fiber-api-template.git
+cd go-fiber-api-template
+```
+
+### 2. Install Dependencies
+
+```bash
+go mod tidy
+```
+
+### 3. Setup Environment
+
+Create a `.env` file in the root:
+
+```env
+PORT=8080
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=fiber_api_db
+JWT_SECRET=supersecretkey
+```
+
+### 4. Run Server
+
+```bash
+go run main.go
+```
+
+---
+
+## 🔑 Authentication
+
+### Register User
+
+`POST /api/auth/register`
+
+```json
+{
+  "username": "john",
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+### Login
+
+`POST /api/auth/login`
+
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+Response:
+
+```json
+{
+  "token": "jwt-token-string"
+}
+```
+
+Include JWT token in **Authorization Header**:
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## 📌 API Endpoints
+
+### Auth
+
+- `POST /api/auth/register` – Register new user
+- `POST /api/auth/login` – Login and receive JWT
+
+### Users
+
+- `GET /api/users/me` – Get logged-in user profile
+- `GET /api/users` – Admin only → Get all users
+
+### Todos
+
+- `POST /api/todos` – Create a todo (user only sees their todos)
+- `GET /api/todos` – Get logged-in user’s todos
+- `GET /api/todos/all` – Admin only → Get all todos
+- `PUT /api/todos/:id` – Update own todo
+- `DELETE /api/todos/:id` – Delete own todo
+
+---
+
+## 🛡️ Roles
+
+- **Normal User** → Can access only their own todos
+- **Admin** → Can access all todos & users
+
+---
+
+## 🧪 Testing
+
+You can use **Postman** or **cURL**:
+
+```bash
+curl -X GET http://localhost:8080/api/todos \
+  -H "Authorization: Bearer <your-jwt>"
+```
+
+---
+
+## 🐳 Docker Support (Optional)
+
+COMING SOON
+
+---
+
+## 🛠️ Tech Stack
+
+- [Go](https://golang.org/)
+- [Fiber](https://gofiber.io/)
+- [MongoDB](https://www.mongodb.com/)
+- JWT for authentication
+- bcrypt for password hashing
+
+---
+
+## 🚀 Deployment
+
+You can deploy to:
+
+- Docker + Kubernetes
+- Render / Railway / Fly.io
+- AWS, GCP, Azure
+
+---
+
+## 📜 License
+
+MIT License © 2025
+
+---
+
+## 🙌 Contributing
+
+PRs are welcome! Please open an issue for discussion first.
