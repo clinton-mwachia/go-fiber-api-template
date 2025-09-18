@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // define user collection
@@ -227,4 +228,42 @@ func ChangePassword(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Password updated successfully"})
+}
+
+// reset user password
+// ONLY ADMIN CAN DO THIS
+func ResetPassword(c *fiber.Ctx) error {
+	type ResetInput struct {
+		NewPassword string `json:"newPassword"`
+	}
+
+	var input ResetInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	userId := c.Params("id")
+	objID, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to hash password"})
+	}
+
+	// Update the user’s password
+	update := bson.M{"$set": bson.M{"password": string(hashedPassword)}}
+	result, err := userCollection.UpdateOne(context.Background(), bson.M{"_id": objID}, update)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to reset password"})
+	}
+
+	if result.MatchedCount == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Password reset successfully"})
 }

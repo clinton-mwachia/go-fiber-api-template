@@ -18,4 +18,5 @@ func SetUpRouter(app *fiber.App) {
 	api.Put("/user/:id", controllers.UpdateUser)
 	api.Delete("/user/:id", controllers.DeleteUser)
 	api.Put("/change-password/:id", controllers.ChangePassword)
+	api.Put("/reset-password/:id", controllers.ResetPassword)
 }
