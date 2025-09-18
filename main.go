@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
+	"github.com/clinton-mwachia/go-fiber-api-template/controllers"
 	"github.com/clinton-mwachia/go-fiber-api-template/routes"
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,6 +18,9 @@ func main() {
 	config.Load()
 	// connect DB
 	config.ConnectDB()
+
+	// initialize user collection
+	controllers.InitUserCollection()
 
 	// setup routes (controllers contain logic)
 	routes.SetUpRouter(app)

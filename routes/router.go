@@ -12,5 +12,5 @@ func SetUpRouter(app *fiber.App) {
 	api := app.Group("/api")
 
 	// users routes
-	api.Get("/", controllers.TestUserControler)
+	api.Get("/user/register", controllers.Register)
 }
