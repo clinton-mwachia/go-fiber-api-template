@@ -148,3 +148,28 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	return c.JSON(updatedUser)
 }
+
+// delete user by id
+func DeleteUser(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+
+	// Validate ObjectID
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := userCollection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete user"})
+	}
+
+	if result.DeletedCount == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	return c.JSON(fiber.Map{"message": "User deleted successfully"})
+}
