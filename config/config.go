@@ -4,13 +4,61 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+type Config struct {
+	Port      string
+	MongoURI  string
+	MongoDB   string
+	JWTSecret string
+	JWTTTLMin int
+}
+
 var DB *mongo.Database
+var Cfg *Config
+
+// a function to load env varibales
+func Load() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️ No .env file found; falling back to environment variables")
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+	mongoDB := os.Getenv("MONGO_DB")
+	if mongoDB == "" {
+		mongoDB = "myapi_db"
+	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET must be set")
+	}
+	ttl := 60
+	if v := os.Getenv("JWT_TTL_MIN"); v != "" {
+		if i, err := strconv.Atoi(v); err == nil {
+			ttl = i
+		}
+	}
+
+	Cfg = &Config{
+		Port:      port,
+		MongoURI:  mongoURI,
+		MongoDB:   mongoDB,
+		JWTSecret: jwtSecret,
+		JWTTTLMin: ttl,
+	}
+}
 
 func ConnectDB() {
 	mongoURI := os.Getenv("MONGO_URI")
