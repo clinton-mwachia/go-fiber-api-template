@@ -250,3 +250,13 @@ func GetTodosByUserID(c *fiber.Ctx) error {
 
 	return c.JSON(todos)
 }
+
+// count all todos
+func CountTodos(c *fiber.Ctx) error {
+	count, err := todoCollection.CountDocuments(context.Background(), bson.M{})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos"})
+	}
+
+	return c.JSON(fiber.Map{"count": count})
+}
