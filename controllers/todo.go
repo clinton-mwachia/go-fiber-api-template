@@ -60,7 +60,7 @@ func CreateTodo(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err == nil {
 		// Save file
-		filename := fmt.Sprintf("uploads/%s", strings.ToLower(file.Filename))
+		filename := fmt.Sprintf("uploads/%s_%s", time.Now().Format("20060102150405"), strings.ToLower(file.Filename))
 		if err := c.SaveFile(file, filename); err != nil {
 			fmt.Println(err.Error())
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to save image"})
@@ -136,4 +136,69 @@ func DeleteTodo(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Todo deleted successfully"})
+}
+
+// update a todo
+func UpdateTodo(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	todoID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	var body struct {
+		Title     *string `json:"title"`
+		Completed *bool   `json:"completed"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
+	}
+
+	// Fetch current todo
+	var todo models.Todo
+	if err := todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo); err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+	}
+
+	update := bson.M{}
+	if body.Title != nil {
+		update["title"] = *body.Title
+	}
+	if body.Completed != nil {
+		update["completed"] = *body.Completed
+	}
+
+	// Handle image upload
+	file, err := c.FormFile("image")
+	if err == nil {
+		// Delete old image if exists
+		if todo.Image != "" {
+			if err := os.Remove(todo.Image); err != nil {
+				c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("%s%s", "Failed to delete old todo image:", err)})
+			}
+		}
+
+		// Save new image
+		filename := fmt.Sprintf("uploads/%s_%s", time.Now().Format("20060102150405"), strings.ToLower(file.Filename))
+		if err := c.SaveFile(file, filename); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to save new image"})
+		}
+		update["image"] = filename
+	}
+
+	if len(update) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "Nothing to update"})
+	}
+
+	// Update in MongoDB
+	_, err = todoCollection.UpdateOne(context.Background(), bson.M{"_id": todoID}, bson.M{"$set": update})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update todo"})
+	}
+
+	// Return updated todo
+	var updated models.Todo
+	_ = todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&updated)
+
+	return c.JSON(updated)
 }
