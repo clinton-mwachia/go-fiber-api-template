@@ -260,3 +260,33 @@ func CountTodos(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"count": count})
 }
+
+// count todos by user
+func CountTodosByUserID(c *fiber.Ctx) error {
+	userIDParam := c.Params("userId")
+	userID, err := primitive.ObjectIDFromHex(userIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID format"})
+	}
+
+	// get user
+	var user models.User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user"})
+	}
+
+	count, err := todoCollection.CountDocuments(context.Background(), bson.M{"userId": userID})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos"})
+	}
+
+	return c.JSON(fiber.Map{"userId": user.Username, "count": count})
+}
