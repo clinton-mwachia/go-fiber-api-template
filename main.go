@@ -9,11 +9,14 @@ import (
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
 	"github.com/clinton-mwachia/go-fiber-api-template/controllers"
 	"github.com/clinton-mwachia/go-fiber-api-template/routes"
+	"github.com/clinton-mwachia/go-fiber-api-template/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	app := fiber.New()
+	// ensure uploads folder is created
+	utils.EnsureUploadsFolder()
 	// load env
 	config.Load()
 	// connect DB
