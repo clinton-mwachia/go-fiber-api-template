@@ -23,4 +23,5 @@ func SetUpRouter(app *fiber.App) {
 
 	// todos routes
 	api.Post("/todo", controllers.CreateTodo)
+	api.Get("/todos", controllers.GetTodos)
 }

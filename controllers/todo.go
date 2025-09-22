@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -21,6 +22,7 @@ func InitTodoCollection() {
 	todoCollection = config.GetCollection("todos")
 }
 
+// add a new todo
 func CreateTodo(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	userID := c.FormValue("userId")
@@ -82,4 +84,21 @@ func CreateTodo(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(res)
+}
+
+// get all todos
+func GetTodos(c *fiber.Ctx) error {
+	cursor, err := todoCollection.Find(context.Background(), bson.M{})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos"})
+	}
+	defer cursor.Close(context.Background())
+
+	todos := []models.Todo{}
+	if err := cursor.All(context.Background(), &todos); err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos"})
+	}
+
+	return c.JSON(todos)
 }
