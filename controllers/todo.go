@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -101,4 +102,38 @@ func GetTodos(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(todos)
+}
+
+// delete todo by id
+func DeleteTodo(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	todoID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	// Find the todo first to get image path
+	var todo models.Todo
+	err = todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+	}
+
+	// Delete the todo
+	result, err := todoCollection.DeleteOne(context.Background(), bson.M{"_id": todoID})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete todo"})
+	}
+	if result.DeletedCount == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+	}
+
+	// Delete image file if it exists
+	if todo.Image != "" {
+		if err := os.Remove(todo.Image); err != nil {
+			c.Status(404).JSON(fiber.Map{"error": fmt.Sprintf("%s%s", "Failed to delete todo image: ", err.Error())})
+		}
+	}
+
+	return c.JSON(fiber.Map{"message": "Todo deleted successfully"})
 }
