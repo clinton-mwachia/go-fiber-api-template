@@ -29,9 +29,8 @@ type LoginInput struct {
 
 // Login response with expiry
 type LoginResponse struct {
-	Token     string      `json:"token"`
-	ExpiresAt int64       `json:"expires_at"` // UNIX timestamp
-	User      models.User `json:"user"`
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expires_at"` // UNIX timestamp
 }
 
 // Init sets up the collections after DB connection
@@ -321,12 +320,8 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
 
-	// Don’t return hashed password
-	user.Password = ""
-
 	return c.JSON(LoginResponse{
 		Token:     signedToken,
 		ExpiresAt: expirationTime,
-		User:      user,
 	})
 }
