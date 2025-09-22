@@ -3,12 +3,14 @@ package controllers
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
 	"github.com/clinton-mwachia/go-fiber-api-template/models"
 	"github.com/clinton-mwachia/go-fiber-api-template/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -17,6 +19,20 @@ import (
 
 // define user collection
 var userCollection *mongo.Collection
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
+// Login request body
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Login response with expiry
+type LoginResponse struct {
+	Token     string      `json:"token"`
+	ExpiresAt int64       `json:"expires_at"` // UNIX timestamp
+	User      models.User `json:"user"`
+}
 
 // Init sets up the collections after DB connection
 func InitUserCollection() {
@@ -266,4 +282,51 @@ func ResetPassword(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Password reset successfully"})
+}
+
+// Login user
+func Login(c *fiber.Ctx) error {
+	var input LoginInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	// Find user by email
+	var user models.User
+	err := userCollection.FindOne(context.Background(), bson.M{"email": input.Email}).Decode(&user)
+	if err == mongo.ErrNoDocuments {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	} else if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Something went wrong"})
+	}
+
+	// Check password
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
+	}
+
+	// Expiry time
+	expirationTime := time.Now().Add(time.Hour * 72).Unix() // 72 hours from now
+
+	// Create JWT token
+	claims := jwt.MapClaims{
+		"user_id": user.ID.Hex(),
+		"role":    user.Role,
+		"exp":     expirationTime,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(jwtSecret)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
+	}
+
+	// Don’t return hashed password
+	user.Password = ""
+
+	return c.JSON(LoginResponse{
+		Token:     signedToken,
+		ExpiresAt: expirationTime,
+		User:      user,
+	})
 }
