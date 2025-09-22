@@ -26,4 +26,5 @@ func SetUpRouter(app *fiber.App) {
 	api.Get("/todos", controllers.GetTodos)
 	api.Delete("/todo/:id", controllers.DeleteTodo)
 	api.Put("/todo/:id", controllers.UpdateTodo)
+	api.Get("/todo/:id", controllers.GetTodoByID)
 }

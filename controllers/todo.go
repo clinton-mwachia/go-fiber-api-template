@@ -202,3 +202,23 @@ func UpdateTodo(c *fiber.Ctx) error {
 
 	return c.JSON(updated)
 }
+
+// get todo by id
+func GetTodoByID(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	todoID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	var todo models.Todo
+	err = todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+		}
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todo"})
+	}
+
+	return c.JSON(todo)
+}
