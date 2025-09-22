@@ -17,6 +17,7 @@ func main() {
 	app := fiber.New()
 	// ensure uploads folder is created
 	utils.EnsureUploadsFolder()
+
 	// load env
 	config.Load()
 	// connect DB
@@ -24,6 +25,7 @@ func main() {
 
 	// initialize user collection
 	controllers.InitUserCollection()
+	controllers.InitTodoCollection()
 
 	// setup routes (controllers contain logic)
 	routes.SetUpRouter(app)

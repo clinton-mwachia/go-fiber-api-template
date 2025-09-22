@@ -20,4 +20,7 @@ func SetUpRouter(app *fiber.App) {
 	api.Put("/change-password/:id", controllers.ChangePassword)
 	api.Put("/reset-password/:id", controllers.ResetPassword)
 	api.Post("/login", controllers.Login)
+
+	// todos routes
+	api.Post("/todo", controllers.CreateTodo)
 }
