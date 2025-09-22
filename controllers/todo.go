@@ -222,3 +222,31 @@ func GetTodoByID(c *fiber.Ctx) error {
 
 	return c.JSON(todo)
 }
+
+// get todo by userid
+func GetTodosByUserID(c *fiber.Ctx) error {
+	userIDParam := c.Params("userId")
+	userID, err := primitive.ObjectIDFromHex(userIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	// Find all todos for this user
+	cursor, err := todoCollection.Find(context.Background(), bson.M{"userId": userID})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos"})
+	}
+	defer cursor.Close(context.Background())
+
+	var todos []models.Todo
+	if err := cursor.All(context.Background(), &todos); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos"})
+	}
+
+	// Always return [] instead of null
+	if todos == nil {
+		todos = []models.Todo{}
+	}
+
+	return c.JSON(todos)
+}
