@@ -19,7 +19,6 @@ import (
 
 // define user collection
 var userCollection *mongo.Collection
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // Login request body
 type LoginInput struct {
@@ -285,6 +284,7 @@ func ResetPassword(c *fiber.Ctx) error {
 
 // Login user
 func Login(c *fiber.Ctx) error {
+	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	var input LoginInput
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
@@ -306,7 +306,6 @@ func Login(c *fiber.Ctx) error {
 
 	// Expiry time
 	expirationTime := time.Now().Add(time.Hour * 72).Unix() // 72 hours from now
-
 	// Create JWT token
 	claims := jwt.MapClaims{
 		"user_id": user.ID.Hex(),
