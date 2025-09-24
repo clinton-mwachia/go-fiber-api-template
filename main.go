@@ -11,10 +11,17 @@ import (
 	"github.com/clinton-mwachia/go-fiber-api-template/routes"
 	"github.com/clinton-mwachia/go-fiber-api-template/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
 	app := fiber.New()
+
+	// Or extend your config for customization
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "https://example.com, https://example.com", // user "*" to allow all origins, methods etc
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
 	// ensure uploads folder is created
 	utils.EnsureUploadsFolder()
 
