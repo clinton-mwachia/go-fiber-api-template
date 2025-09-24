@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
 	"github.com/clinton-mwachia/go-fiber-api-template/controllers"
@@ -12,6 +13,7 @@ import (
 	"github.com/clinton-mwachia/go-fiber-api-template/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
 func main() {
@@ -25,6 +27,18 @@ func main() {
 		AllowMethods: "GET,POST,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
+
+	// Rate Limiting middleware for all routes
+	app.Use(limiter.New(limiter.Config{
+		Max:        100,             // max requests
+		Expiration: 1 * time.Minute, // per minute
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Too many requests, please try again later",
+			})
+		},
+	}))
+
 	// ensure uploads folder is created
 	utils.EnsureUploadsFolder()
 

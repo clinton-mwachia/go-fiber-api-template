@@ -1,10 +1,13 @@
 package routes
 
 import (
+	"time"
+
 	"github.com/clinton-mwachia/go-fiber-api-template/config"
 	"github.com/clinton-mwachia/go-fiber-api-template/controllers"
 	"github.com/clinton-mwachia/go-fiber-api-template/middlewares"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
@@ -36,6 +39,15 @@ func SetUpRouter(app *fiber.App) {
 	api.Put("/todo/:id", controllers.UpdateTodo)
 	api.Get("/todo/:id", controllers.GetTodoByID)
 	api.Get("/todos/:userId/count", controllers.CountTodosByUserID)
-	api.Get("/todos/count", controllers.CountTodos)
+	// the api only make 3 requests per minute
+	api.Get("/todos/count", limiter.New(limiter.Config{
+		Max:        3,               // max requests
+		Expiration: 1 * time.Minute, // per minute
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Too many requests, please try after 1 minute",
+			})
+		},
+	}), controllers.CountTodos)
 	api.Get("/todos/:userId", controllers.GetTodosByUserID)
 }
