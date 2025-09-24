@@ -17,9 +17,12 @@ import (
 func main() {
 	app := fiber.New()
 
-	// Or extend your config for customization
+	// cors config for customization
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://example.com, https://example.com", // user "*" to allow all origins, methods etc
+		// user "*" in AllowOrigins to allow all origins, methods etc but it is prohibited
+		// because it can expose your application to security risks.
+		AllowOrigins: "https://example.com, https://example.com",
+		AllowMethods: "GET,POST,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 	// ensure uploads folder is created
