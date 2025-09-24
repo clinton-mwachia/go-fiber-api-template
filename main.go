@@ -12,6 +12,7 @@ import (
 	"github.com/clinton-mwachia/go-fiber-api-template/routes"
 	"github.com/clinton-mwachia/go-fiber-api-template/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
@@ -37,6 +38,11 @@ func main() {
 				"error": "Too many requests, please try again later",
 			})
 		},
+	}))
+
+	// compress response
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestCompression,
 	}))
 
 	// ensure uploads folder is created
