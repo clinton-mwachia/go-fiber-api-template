@@ -288,5 +288,5 @@ func CountTodosByUserID(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos"})
 	}
 
-	return c.JSON(fiber.Map{"userId": user.Username, "count": count})
+	return c.JSON(fiber.Map{"user": user.Username, "count": count})
 }
