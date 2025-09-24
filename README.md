@@ -32,18 +32,15 @@ go-fiber-api-template/
 │ ├── user.go
 │ └── todo.go
 │── routes/
-│ ├── auth.go
+│ └── router.go
+│── controllers/
 │ ├── todo.go
 │ └── user.go
-│── controllers/
-│ ├── authController.go
-│ ├── todoController.go
-│ └── userController.go
 │── middlewares/
-│ ├── jwt.go
-│ └── role.go
+│ ├── auth.go
+│ └── ownership.go
 │── utils/
-│ ├── jwt.go
+│ ├── folderCreate.go
 │ └── password.go
 │── .env
 │── README.md
