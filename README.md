@@ -90,19 +90,20 @@ go run main.go
 
 ### Register User
 
-`POST /api/auth/register`
+`POST /api/user/register`
 
 ```json
 {
   "username": "john",
   "email": "john@example.com",
+  "role": "user",
   "password": "password123"
 }
 ```
 
 ### Login
 
-`POST /api/auth/login`
+`POST /api/login`
 
 ```json
 {
@@ -115,7 +116,8 @@ Response:
 
 ```json
 {
-  "token": "jwt-token-string"
+  "token": "jwt-token-string",
+  "expires_at": 1758965623
 }
 ```
 
@@ -131,21 +133,21 @@ Authorization: Bearer <token>
 
 ### Auth
 
-- `POST /api/auth/register` – Register new user
-- `POST /api/auth/login` – Login and receive JWT
+- `POST /api/register` – Register new user
+- `POST /api/login` – Login and receive JWT
 
 ### Users
 
-- `GET /api/users/me` – Get logged-in user profile
-- `GET /api/users` – Admin only → Get all users
+- `GET /api/users` – Get all users
+- `GET /api/user/:id` – Get user by id
 
 ### Todos
 
 - `POST /api/todos` – Create a todo (user only sees their todos)
 - `GET /api/todos` – Get logged-in user’s todos
 - `GET /api/todos/all` – Admin only → Get all todos
-- `PUT /api/todos/:id` – Update own todo
-- `DELETE /api/todos/:id` – Delete own todo
+- `PUT /api/todo/:id` – Update own todo
+- `DELETE /api/todo/:id` – Delete own todo
 
 ---
 
