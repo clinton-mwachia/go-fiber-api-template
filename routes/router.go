@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/clinton-mwachia/go-fiber-api-template/config"
 	"github.com/clinton-mwachia/go-fiber-api-template/controllers"
 	"github.com/clinton-mwachia/go-fiber-api-template/middlewares"
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +17,9 @@ func SetUpRouter(app *fiber.App) {
 
 	api.Use(middlewares.AuthRequired())
 
+	// get collections
+	todoCollection := config.GetCollection("todos")
+
 	// users routes
 	api.Post("/user/register", controllers.Register)
 	api.Get("/users", controllers.GetAllUsers)
@@ -28,7 +32,7 @@ func SetUpRouter(app *fiber.App) {
 	// todos routes
 	api.Post("/todo", controllers.CreateTodo)
 	api.Get("/todos", controllers.GetTodos)
-	api.Delete("/todo/:id", controllers.DeleteTodo)
+	api.Delete("/todo/:id", middlewares.EnsureTodoOwner(todoCollection), controllers.DeleteTodo)
 	api.Put("/todo/:id", controllers.UpdateTodo)
 	api.Get("/todo/:id", controllers.GetTodoByID)
 	api.Get("/todos/:userId/count", controllers.CountTodosByUserID)
