@@ -8,13 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadStats() {
   const usersRes = await fetch(`${API_BASE}/users`);
-  const todosRes = await fetch(`${API_BASE}/todos`);
+  const todosRes = await fetch(`${API_BASE}/todos/count`);
+
+  todos = await todosRes.json();
+
   document.getElementById("totalUsers").textContent = (
     await usersRes.json()
   ).length;
-  document.getElementById("totalTodos").textContent = (
-    await todosRes.json()
-  ).length;
+  document.getElementById("totalTodos").textContent = todos.count;
 }
 
 // USERS
