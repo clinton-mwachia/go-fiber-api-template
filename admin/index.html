@@ -3,55 +3,212 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Go Fiber API Template Dashboard</title>
+    <title>Admin Dashboard</title>
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css" />
   </head>
-  <body>
+  <body class="bg-light">
     <nav class="navbar navbar-dark bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">Go Fiber API Template</a>
+        <a class="navbar-brand" href="#">Admin Dashboard</a>
+        <button id="logoutBtn" class="btn btn-danger btn-sm">Logout</button>
       </div>
     </nav>
 
-    <div class="d-flex">
-      <!-- Sidebar -->
-      <div class="bg-light border-end p-3" id="sidebar">
-        <h5>Menu</h5>
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="nav-dashboard">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="nav-users">Manage Users</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="nav-todos">Manage Todos</a>
-          </li>
-        </ul>
+    <div class="container mt-4">
+      <div class="row">
+        <!-- Stats -->
+        <div class="col-md-4">
+          <div class="card text-bg-primary mb-3">
+            <div class="card-body text-center">
+              <h5>Total Users</h5>
+              <h2 id="totalUsers">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-bg-success mb-3">
+            <div class="card-body text-center">
+              <h5>Total Todos</h5>
+              <h2 id="totalTodos">0</h2>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Main content -->
-      <div class="p-4 w-100" id="content">
-        <h2>Welcome to Moshe API Admin</h2>
-        <p>Select a section from the sidebar.</p>
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="users-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#users"
+            type="button"
+          >
+            Users
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="todos-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#todos"
+            type="button"
+          >
+            Todos
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content mt-3">
+        <!-- Users -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel">
+          <div class="d-flex justify-content-between mb-2">
+            <h4>Users</h4>
+            <button
+              class="btn btn-primary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#userModal"
+            >
+              Add User
+            </button>
+          </div>
+          <table class="table table-striped" id="usersTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Todos -->
+        <div class="tab-pane fade" id="todos" role="tabpanel">
+          <div class="d-flex justify-content-between mb-2">
+            <h4>Todos</h4>
+            <button
+              class="btn btn-primary btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#todoModal"
+            >
+              Add Todo
+            </button>
+          </div>
+          <table class="table table-striped" id="todosTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>User ID</th>
+                <th>Completed</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="admin/js/api.js"></script>
+    <!-- User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="userForm">
+            <div class="modal-header">
+              <h5 class="modal-title">Add/Edit User</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="userId" />
+              <div class="mb-3">
+                <label>Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label>Email</label>
+                <input type="email" id="email" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label>Role</label>
+                <select id="role" class="form-select">
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Todo Modal -->
+    <div class="modal fade" id="todoModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="todoForm">
+            <div class="modal-header">
+              <h5 class="modal-title">Add/Edit Todo</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="todoId" />
+              <div class="mb-3">
+                <label>Title</label>
+                <input type="text" id="title" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label>User ID</label>
+                <input
+                  type="text"
+                  id="todoUserId"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="form-check mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="completed"
+                />
+                <label class="form-check-label">Completed</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="admin/js/dashboard.js"></script>
-    <script src="admin/js/users.js"></script>
-    <script src="admin/js/todos.js"></script>
-    <script>
-      document
-        .getElementById("nav-dashboard")
-        .addEventListener("click", loadDashboard);
-      document.getElementById("nav-users").addEventListener("click", loadUsers);
-      document.getElementById("nav-todos").addEventListener("click", loadTodos);
-    </script>
   </body>
 </html>
