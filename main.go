@@ -60,6 +60,12 @@ func main() {
 	// setup routes (controllers contain logic)
 	routes.SetUpRouter(app)
 
+	// server admin
+	app.Static("/admin", "./admin")
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Redirect("/admin")
+	})
+
 	// Handle shutdown signals
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

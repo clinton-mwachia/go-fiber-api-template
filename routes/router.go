@@ -18,7 +18,7 @@ func SetUpRouter(app *fiber.App) {
 
 	api.Post("/login", controllers.Login)
 
-	api.Use(middlewares.AuthRequired())
+	//api.Use(middlewares.AuthRequired())
 
 	// get collections
 	todoCollection := config.GetCollection("todos")
