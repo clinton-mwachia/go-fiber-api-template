@@ -24,7 +24,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		// user "*" in AllowOrigins to allow all origins, methods etc but it is prohibited
 		// because it can expose your application to security risks.
-		AllowOrigins: "https://example.com, https://example.com",
+		AllowOrigins: "http://127.0.0.1:8080",
 		AllowMethods: "GET,POST,PUT,DELETE",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
