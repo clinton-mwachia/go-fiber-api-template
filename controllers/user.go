@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -78,6 +79,50 @@ func GetAllUsers(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(users)
+}
+
+// get all users with pagination
+func GetPaginatedUsers(c *fiber.Ctx) error {
+	var users []models.User
+
+	// pagination params
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+
+	skip := (page - 1) * limit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	opts := options.Find().
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit)).
+		SetSort(bson.M{"created_at": -1}) // newest first
+
+	cursor, err := userCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		log.Println("Mongo Find error:", err)
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users"})
+	}
+	defer cursor.Close(ctx)
+
+	if err := cursor.All(ctx, &users); err != nil {
+		log.Println("Cursor decode error:", err)
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users"})
+	}
+
+	return c.JSON(fiber.Map{
+		"page":  page,
+		"limit": limit,
+		"data":  users,
+	})
 }
 
 // get user by id
