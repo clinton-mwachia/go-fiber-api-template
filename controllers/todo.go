@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -32,7 +31,7 @@ func CreateTodo(c *fiber.Ctx) error {
 
 	uid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	// confirm user exists
@@ -40,9 +39,9 @@ func CreateTodo(c *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println(err.Error())
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+			return c.Status(404).JSON(fiber.Map{"error": "User not found: " + err.Error()})
 		}
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user: " + err.Error()})
 	}
 
 	if title == "" || userID == "" {
@@ -73,7 +72,7 @@ func CreateTodo(c *fiber.Ctx) error {
 
 	_, err = todoCollection.InsertOne(ctx, todo)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to create todo"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to create todo: " + err.Error()})
 	}
 
 	res := models.Todo{
@@ -91,14 +90,13 @@ func CreateTodo(c *fiber.Ctx) error {
 func GetTodos(c *fiber.Ctx) error {
 	cursor, err := todoCollection.Find(context.Background(), bson.M{})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos: " + err.Error()})
 	}
 	defer cursor.Close(context.Background())
 
 	todos := []models.Todo{}
 	if err := cursor.All(context.Background(), &todos); err != nil {
-		log.Println(err)
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos: " + err.Error()})
 	}
 
 	return c.JSON(todos)
@@ -109,20 +107,20 @@ func DeleteTodo(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	todoID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID: " + err.Error()})
 	}
 
 	// Find the todo first to get image path
 	var todo models.Todo
 	err = todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo)
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+		return c.Status(404).JSON(fiber.Map{"error": "Todo not found: " + err.Error()})
 	}
 
 	// Delete the todo
 	result, err := todoCollection.DeleteOne(context.Background(), bson.M{"_id": todoID})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete todo"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete todo " + err.Error()})
 	}
 	if result.DeletedCount == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
@@ -143,7 +141,7 @@ func UpdateTodo(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	todoID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID: " + err.Error()})
 	}
 
 	var body struct {
@@ -151,13 +149,13 @@ func UpdateTodo(c *fiber.Ctx) error {
 		Completed *bool   `json:"completed"`
 	}
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid body: " + err.Error()})
 	}
 
 	// Fetch current todo
 	var todo models.Todo
 	if err := todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo); err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+		return c.Status(404).JSON(fiber.Map{"error": "Todo not found: " + err.Error()})
 	}
 
 	update := bson.M{}
@@ -181,7 +179,7 @@ func UpdateTodo(c *fiber.Ctx) error {
 		// Save new image
 		filename := fmt.Sprintf("uploads/%s_%s", time.Now().Format("20060102150405"), strings.ToLower(file.Filename))
 		if err := c.SaveFile(file, filename); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": "Failed to save new image"})
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to save new image: " + err.Error()})
 		}
 		update["image"] = filename
 	}
@@ -193,7 +191,7 @@ func UpdateTodo(c *fiber.Ctx) error {
 	// Update in MongoDB
 	_, err = todoCollection.UpdateOne(context.Background(), bson.M{"_id": todoID}, bson.M{"$set": update})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to update todo"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update todo: " + err.Error()})
 	}
 
 	// Return updated todo
@@ -208,16 +206,16 @@ func GetTodoByID(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	todoID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID: " + err.Error()})
 	}
 
 	var todo models.Todo
 	err = todoCollection.FindOne(context.Background(), bson.M{"_id": todoID}).Decode(&todo)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"error": "Todo not found"})
+			return c.Status(404).JSON(fiber.Map{"error": "Todo not found: " + err.Error()})
 		}
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todo"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todo: " + err.Error()})
 	}
 
 	return c.JSON(todo)
@@ -228,19 +226,19 @@ func GetTodosByUserID(c *fiber.Ctx) error {
 	userIDParam := c.Params("userId")
 	userID, err := primitive.ObjectIDFromHex(userIDParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	// Find all todos for this user
 	cursor, err := todoCollection.Find(context.Background(), bson.M{"userId": userID})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch todos: " + err.Error()})
 	}
 	defer cursor.Close(context.Background())
 
 	var todos []models.Todo
 	if err := cursor.All(context.Background(), &todos); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos: " + err.Error()})
 	}
 
 	// Always return [] instead of null
@@ -255,7 +253,7 @@ func GetTodosByUserID(c *fiber.Ctx) error {
 func CountTodos(c *fiber.Ctx) error {
 	count, err := todoCollection.CountDocuments(context.Background(), bson.M{})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos: " + err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"count": count})
@@ -266,7 +264,7 @@ func CountTodosByUserID(c *fiber.Ctx) error {
 	userIDParam := c.Params("userId")
 	userID, err := primitive.ObjectIDFromHex(userIDParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID format"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID format: " + err.Error()})
 	}
 
 	// get user
@@ -278,14 +276,14 @@ func CountTodosByUserID(c *fiber.Ctx) error {
 	err = userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+			return c.Status(404).JSON(fiber.Map{"error": "User not found: " + err.Error()})
 		}
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch user: " + err.Error()})
 	}
 
 	count, err := todoCollection.CountDocuments(context.Background(), bson.M{"userId": userID})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to count todos: " + err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"user": user.Username, "count": count})

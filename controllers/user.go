@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
@@ -42,7 +41,7 @@ func InitUserCollection() {
 func Register(c *fiber.Ctx) error {
 	var body models.User
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request: " + err.Error()})
 	}
 
 	// Hash password
@@ -57,7 +56,7 @@ func Register(c *fiber.Ctx) error {
 	defer cancel()
 	_, err := userCollection.InsertOne(ctx, body)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to register user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to register user: " + err.Error()})
 	}
 
 	return c.Status(201).JSON(fiber.Map{"message": "User registered successfully"})
@@ -69,12 +68,11 @@ func GetAllUsers(c *fiber.Ctx) error {
 
 	cursor, err := userCollection.Find(context.Background(), bson.M{})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users: " + err.Error()})
 	}
 	defer cursor.Close(context.Background())
 
 	if err := cursor.All(context.Background(), &users); err != nil {
-		log.Println(err)
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users"})
 	}
 
@@ -108,14 +106,12 @@ func GetPaginatedUsers(c *fiber.Ctx) error {
 
 	cursor, err := userCollection.Find(ctx, bson.M{}, opts)
 	if err != nil {
-		log.Println("Mongo Find error:", err)
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users: " + err.Error()})
 	}
 	defer cursor.Close(ctx)
 
 	if err := cursor.All(ctx, &users); err != nil {
-		log.Println("Cursor decode error:", err)
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users: " + err.Error()})
 	}
 
 	return c.JSON(fiber.Map{
@@ -132,7 +128,7 @@ func GetUserByID(c *fiber.Ctx) error {
 	// Validate ObjectID
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	var user models.User
@@ -157,7 +153,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	// Validate ObjectID
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	var body struct {
@@ -167,7 +163,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body: " + err.Error()})
 	}
 
 	update := bson.M{}
@@ -194,7 +190,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		bson.M{"$set": update},
 	)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to update user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update user: " + err.Error()})
 	}
 	if result.MatchedCount == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
@@ -203,7 +199,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	// Fetch updated user
 	var updatedUser models.User
 	if err := userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&updatedUser); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch updated user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch updated user: " + err.Error()})
 	}
 
 	return c.JSON(updatedUser)
@@ -216,7 +212,7 @@ func DeleteUser(c *fiber.Ctx) error {
 	// Validate ObjectID
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -224,7 +220,7 @@ func DeleteUser(c *fiber.Ctx) error {
 
 	result, err := userCollection.DeleteOne(ctx, bson.M{"_id": objID})
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete user"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete user: " + err.Error()})
 	}
 
 	if result.DeletedCount == 0 {
@@ -241,7 +237,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	// Validate ObjectID
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	var body struct {
@@ -283,7 +279,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		bson.M{"$set": bson.M{"password": hashed}},
 	)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to update password"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to update password: " + err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"message": "Password updated successfully"})
@@ -298,13 +294,13 @@ func ResetPassword(c *fiber.Ctx) error {
 
 	var input ResetInput
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request: " + err.Error()})
 	}
 
 	userId := c.Params("id")
 	objID, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID: " + err.Error()})
 	}
 
 	// Hash the new password
@@ -317,7 +313,7 @@ func ResetPassword(c *fiber.Ctx) error {
 	update := bson.M{"$set": bson.M{"password": string(hashedPassword)}}
 	result, err := userCollection.UpdateOne(context.Background(), bson.M{"_id": objID}, update)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to reset password"})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to reset password: " + err.Error()})
 	}
 
 	if result.MatchedCount == 0 {
@@ -332,21 +328,21 @@ func Login(c *fiber.Ctx) error {
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	var input LoginInput
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request: " + err.Error()})
 	}
 
 	// Find user by email
 	var user models.User
 	err := userCollection.FindOne(context.Background(), bson.M{"email": input.Email}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
-		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		return c.Status(404).JSON(fiber.Map{"error": "User not found: " + err.Error()})
 	} else if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Something went wrong"})
+		return c.Status(500).JSON(fiber.Map{"error": "Something went wrong: " + err.Error()})
 	}
 
 	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
+		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password: " + err.Error()})
 	}
 
 	// Expiry time
