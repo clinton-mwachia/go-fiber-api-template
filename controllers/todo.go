@@ -37,7 +37,6 @@ func CreateTodo(c *fiber.Ctx) error {
 	// confirm user exists
 	err = userCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&user)
 	if err != nil {
-		fmt.Println(err.Error())
 		if err == mongo.ErrNoDocuments {
 			return c.Status(404).JSON(fiber.Map{"error": "User not found: " + err.Error()})
 		}
@@ -61,7 +60,6 @@ func CreateTodo(c *fiber.Ctx) error {
 		// Save file
 		filename := fmt.Sprintf("uploads/%s_%s", time.Now().Format("20060102150405"), strings.ToLower(file.Filename))
 		if err := c.SaveFile(file, filename); err != nil {
-			fmt.Println(err.Error())
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to save image"})
 		}
 		todo.Image = filename
