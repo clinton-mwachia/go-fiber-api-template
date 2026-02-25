@@ -236,14 +236,9 @@ func GetTodosByUserID(c *fiber.Ctx) error {
 	}
 	defer cursor.Close(context.Background())
 
-	var todos []models.Todo
+	todos := []models.Todo{}
 	if err := cursor.All(context.Background(), &todos); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse todos: " + err.Error()})
-	}
-
-	// Always return [] instead of null
-	if todos == nil {
-		todos = []models.Todo{}
 	}
 
 	return c.JSON(todos)
