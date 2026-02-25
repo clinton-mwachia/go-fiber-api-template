@@ -64,14 +64,13 @@ func Register(c *fiber.Ctx) error {
 
 // get all users
 func GetAllUsers(c *fiber.Ctx) error {
-	var users []models.User
-
 	cursor, err := userCollection.Find(context.Background(), bson.M{})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch users: " + err.Error()})
 	}
 	defer cursor.Close(context.Background())
 
+	users := []models.User{}
 	if err := cursor.All(context.Background(), &users); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users"})
 	}
