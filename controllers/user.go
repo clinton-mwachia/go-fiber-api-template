@@ -80,8 +80,6 @@ func GetAllUsers(c *fiber.Ctx) error {
 
 // get all users with pagination
 func GetPaginatedUsers(c *fiber.Ctx) error {
-	var users []models.User
-
 	// pagination params
 	page := c.QueryInt("page", 1)
 	limit := c.QueryInt("limit", 20)
@@ -109,6 +107,7 @@ func GetPaginatedUsers(c *fiber.Ctx) error {
 	}
 	defer cursor.Close(ctx)
 
+	users := []models.User{}
 	if err := cursor.All(ctx, &users); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse users: " + err.Error()})
 	}
