@@ -34,7 +34,7 @@ func SetUpRouter(app *fiber.App) {
 	api.Put("/reset-password/:id", controllers.ResetPassword)
 
 	// todos routes
-	api.Post("/todo", controllers.CreateTodo)
+	api.Post("/todo/register", controllers.CreateTodo)
 	api.Get("/todos", controllers.GetTodos)
 	api.Delete("/todo/:id", middlewares.EnsureTodoOwner(todoCollection), controllers.DeleteTodo)
 	api.Put("/todo/:id", controllers.UpdateTodo)
