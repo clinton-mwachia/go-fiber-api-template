@@ -12,7 +12,7 @@ This template can serve as a starting point for building APIs of any size.
 - 🔐 JWT authentication
 - 👤 User & Todo example models
 - 🛡️ Role-based access (Admin vs Normal User)
-- 📂 Modular project structure (`models`, `routes`, `middlewares`, `utils`, `config`)
+- 📂 Modular project structure (`models`, `routes`, `middlewares`,`controllers`, `utils`, `config`)
 - 📝 Environment-based configuration
 - 🚀 Ready for containerization and cloud deployment
 
@@ -91,10 +91,10 @@ go run main.go
 
 ```json
 {
-  "username": "john",
-  "email": "john@example.com",
-  "role": "user",
-  "password": "password123"
+  "username": "user",
+  "email": "user@example.com",
+  "role": "User",
+  "password": "userPassword123"
 }
 ```
 
@@ -104,8 +104,8 @@ go run main.go
 
 ```json
 {
-  "email": "john@example.com",
-  "password": "password123"
+  "email": "user@example.com",
+  "password": "userPassword123"
 }
 ```
 
@@ -140,9 +140,8 @@ Authorization: Bearer <token>
 
 ### Todos
 
-- `POST /api/todos` – Create a todo (user only sees their todos)
+- `POST /api/todo/register` – Create a todo (user only sees their todos)
 - `GET /api/todos` – Get logged-in user’s todos
-- `GET /api/todos/all` – Admin only → Get all todos
 - `PUT /api/todo/:id` – Update own todo
 - `DELETE /api/todo/:id` – Delete own todo
 
@@ -157,16 +156,16 @@ Authorization: Bearer <token>
 
 ## 🧪 Testing
 
-You can use **Postman** or **cURL**:
+You can use **Postman**, **Httpie* or **cURL**:
 
 ```bash
-curl -X GET http://localhost:8080/api/todos \
+curl -X GET http://127:0.0.1:8080/api/todos \
   -H "Authorization: Bearer <your-jwt>"
 ```
 
 ---
 
-## 🐳 Docker Support (Optional)
+## 🐳 Docker Support
 
 COMING SOON
 
@@ -194,10 +193,6 @@ You can deploy to:
 
 ## 📜 License
 
-MIT License © 2025
+[MIT](LICENSE) License © 2025
 
 ---
-
-## 🙌 Contributing
-
-PRs are welcome! Please open an issue for discussion first.
